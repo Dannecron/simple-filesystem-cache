@@ -10,7 +10,7 @@ class FileSystemCacheTest extends \PHPUnit\Framework\TestCase
      * @test
      * @throws \Exception
      */
-    public function it_checks_data_clearing_from_cache()
+    public function itChecksDataClearingFromCache(): void
     {
         $cache = new FileSystemCache();
         $cache->clear();
@@ -20,22 +20,23 @@ class FileSystemCacheTest extends \PHPUnit\Framework\TestCase
 
     /**
      * @test
+     * @dataProvider dataProviderForChecksDataExistence
+     * @param string $key
      * @throws \Psr\SimpleCache\InvalidArgumentException
-     * @throws \Exception
      */
-    public function it_checks_data_existence_in_cache()
+    public function itChecksDataExistenceInCache(string $key): void
     {
         $cache = new FileSystemCache();
         $cache->clear();
 
-        $this->assertFalse($cache->has('custom_key'));
+        $this->assertFalse($cache->has($key));
 
-        $cache->set('custom_key', 'sample data');
-        $this->assertTrue($cache->has('custom_key'));
+        $cache->set($key, 'sample data');
+        $this->assertTrue($cache->has($key));
 
         // Set Cache key.
-        $cache->delete('custom_key');
-        $this->assertFalse($cache->has('custom_key'));
+        $cache->delete($key);
+        $this->assertFalse($cache->has($key));
     }
 
     /**
@@ -43,7 +44,7 @@ class FileSystemCacheTest extends \PHPUnit\Framework\TestCase
      * @throws \Psr\SimpleCache\InvalidArgumentException
      * @throws \Exception
      */
-    public function it_checks_data_stored_in_temporary_files_directory()
+    public function itChecksDataStoredInTemporaryFilesDirectory(): void
     {
         $cache = new FileSystemCache();
 
@@ -71,7 +72,7 @@ class FileSystemCacheTest extends \PHPUnit\Framework\TestCase
      * @throws \Psr\SimpleCache\InvalidArgumentException
      * @throws \Exception
      */
-    public function it_checks_data_stored_in_the_given_directory()
+    public function itChecksDataStoredInTheGivenDirectory(): void
     {
         $cache = new FileSystemCache('tmp');
 
@@ -99,7 +100,7 @@ class FileSystemCacheTest extends \PHPUnit\Framework\TestCase
      * @throws \Psr\SimpleCache\InvalidArgumentException
      * @throws \Exception
      */
-    public function it_checks_data_removal_when_its_lifetime_of_caching_passed()
+    public function itChecksDataRemovalWhenItsLifetimeOfCachingPassed(): void
     {
         $cache = new FileSystemCache();
 
@@ -116,7 +117,7 @@ class FileSystemCacheTest extends \PHPUnit\Framework\TestCase
      * @throws \Psr\SimpleCache\InvalidArgumentException
      * @throws \Exception
      */
-    public function it_checks_cached_data_lifetime_incrementing()
+    public function itChecksCachedDataLifetimeIncrementing(): void
     {
         $cache = new FileSystemCache();
 
@@ -128,5 +129,15 @@ class FileSystemCacheTest extends \PHPUnit\Framework\TestCase
 
         sleep(6);
         $this->assertFalse($cache->touch('some_data', 10));
+    }
+
+    public function dataProviderForChecksDataExistence(): array
+    {
+        return [
+            ['custom_key'],
+            ['custom_key.dot'],
+            ['custom_key-hyphen'],
+            ['key_digit_1231'],
+        ];
     }
 }

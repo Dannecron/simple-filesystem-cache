@@ -32,10 +32,10 @@ class FileSystemCache implements CacheInterface
      * @param string $cacheDirectory
      * @throws \Exception
      */
-    public function __construct($cacheDirectory = '')
+    public function __construct(string $cacheDirectory = '')
     {
         if (empty($cacheDirectory)) {
-            $cacheDirectory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . __CLASS__;
+            $cacheDirectory = sys_get_temp_dir() . DIRECTORY_SEPARATOR . str_replace('\\', DIRECTORY_SEPARATOR, __CLASS__);
         } elseif (preg_match('#^\./#', $cacheDirectory)) {
             $cacheDirectory = preg_replace('#^\./#', '', $cacheDirectory);
             $cacheDirectory = getcwd() . DIRECTORY_SEPARATOR . ltrim($cacheDirectory, DIRECTORY_SEPARATOR);
@@ -84,7 +84,7 @@ class FileSystemCache implements CacheInterface
      * @return boolean
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    public function touch($key, $lifetime = 3600)
+    public function touch(string $key, int $lifetime = 3600): bool
     {
         if ($data = $this->get($key)) {
             return $this->set($key, $data, $lifetime);
@@ -102,8 +102,9 @@ class FileSystemCache implements CacheInterface
      */
     public function get($key, $default = null)
     {
-        if (!$this->isKey($key))
+        if (!$this->isKey($key)) {
             return false;
+        }
 
         $file = $this->cacheDirectory . $key;
 
@@ -150,9 +151,9 @@ class FileSystemCache implements CacheInterface
     /**
      * Fetched all the cached data.
      *
-     * @return array
+     * @return array|null
      */
-    public function all()
+    public function all(): ?array
     {
         return $this->cache;
     }
@@ -257,11 +258,11 @@ class FileSystemCache implements CacheInterface
      * @param string $pattern The pattern (@see glob())
      * @return bool Returns TRUE on success or FALSE on failure
      */
-    public function deleteByPattern($pattern = '*')
+    public function deleteByPattern(string $pattern = '*'): bool
     {
         $return = true;
-
-        foreach (glob($this->cacheDirectory . $pattern, GLOB_NOSORT | GLOB_BRACE) as $cacheFile) {
+        $glob = glob($this->cacheDirectory . $pattern, GLOB_NOSORT | (defined('GLOB_BRACE') ? GLOB_BRACE : 0));
+        foreach ($glob as $cacheFile) {
             if (!$this->deleteFile($cacheFile)) {
                 $return = false;
             }
@@ -276,10 +277,10 @@ class FileSystemCache implements CacheInterface
      * @return boolean Returns TRUE if valid key or FALSE otherwise
      * @throws \Psr\SimpleCache\InvalidArgumentException
      */
-    private function isKey($key)
+    private function isKey(string $key): bool
     {
         try {
-            return !preg_match('/[^a-z_\-0-9]/i', $key);
+            return !preg_match('/[^a-z_\-0-9.]/i', $key);
         } catch (\Exception $exception) {
             throw new Exception($exception->getMessage(), $exception->getCode(), $exception);
         }
@@ -290,7 +291,7 @@ class FileSystemCache implements CacheInterface
      * @param string $cacheFile
      * @return bool
      */
-    private function deleteFile($cacheFile)
+    private function deleteFile(string $cacheFile): bool
     {
         unset($this->cache[basename($cacheFile)]);
 
